@@ -1,0 +1,20 @@
+# Ambiente Virtual
+venv/
+env/
+
+# Arquivos compilados do Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Banco de dados local do Django (Nunca deve ir para o GitHub)
+db.sqlite3
+
+# Arquivos de mídia (Uploads de imagens dos produtos não devem ir pro repositório)
+media/
+
+# Variáveis de ambiente (Senhas e chaves secretas futuras)
+.env
+
+# Configurações do PyCharm
+.idea/
