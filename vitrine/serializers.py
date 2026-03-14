@@ -1,17 +1,13 @@
 from rest_framework import serializers
-from vitrine.models import Produto
+from vitrine.models import Produto, Categoria
 
 class ProdutoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Produto
         fields = '__all__'
 
-def create_produto(validated_data):
-    produto = Produto.objects.create(**validated_data)
-    return produto
+class CategoriaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Categoria
+        fields = '__all__'
 
-
-def update_produto(self, instance, validated_data):
-        instance.preco = validated_data.get('preco', instance.preco)
-        instance.save()
-        return instance

@@ -26,6 +26,7 @@ urlpatterns = [
     path("api-auth/", include("rest_framework.urls")),
     path('', views.produto_list),
     path('produto/<int:pk>/', views.produto_detail),
+    path('categoria/', views.categoria_list),
 ]
 
 if settings.DEBUG:
