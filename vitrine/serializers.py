@@ -1,13 +1,16 @@
 from rest_framework import serializers
 from vitrine.models import Produto, Categoria
 
-class ProdutoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Produto
-        fields = '__all__'
-
 class CategoriaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Categoria
-        fields = '__all__'
+        fields = ['id', 'nome', 'descricao']
+
+class ProdutoSerializer(serializers.ModelSerializer):
+    categoria_nome = CategoriaSerializer(source='categoria', many=False, read_only=True)
+    class Meta:
+        model = Produto
+        fields = ['id', 'nome', 'descricao', 'categoria', 'categoria_nome', 'preco', 'imagem', 'ativo']
+
+
 
