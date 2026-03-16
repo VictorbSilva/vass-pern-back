@@ -24,9 +24,7 @@ from django.conf import settings
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("api-auth/", include("rest_framework.urls")),
-    path('', views.produto_list),
-    path('produto/<int:pk>/', views.produto_detail),
-    path('categoria/', views.categoria_list),
+    path("api/", include("vitrine.urls")),
 ]
 
 if settings.DEBUG:
