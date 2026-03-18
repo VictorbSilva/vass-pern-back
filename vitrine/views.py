@@ -19,4 +19,9 @@ class ProdutoViewSet(viewsets.ReadOnlyModelViewSet):
         if categoria_id is not None:
             queryset = queryset.filter(categoria_id=categoria_id)
 
+        busca = self.request.query_params.get('search', None)
+
+        if busca is not None:
+            queryset = queryset.filter(nome__icontains=busca)
+
         return queryset
