@@ -20,6 +20,9 @@ from vitrine import views
 from django.conf.urls.static import static
 from django.conf import settings
 
+admin.site.site_header = "Vassouras Pernambucanas"
+admin.site.site_title = "Painel Administrativo"
+admin.site.index_title = "Gestão do Site"
 
 urlpatterns = [
     path('admin/', admin.site.urls),
