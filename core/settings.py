@@ -74,6 +74,10 @@ CORS_ALLOWED_ORIGINS = [
     "https://vass-pern-front-h9thdgoin-victorbsilvas-projects.vercel.app",
 ]
 
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://vass-pern-front.*\.vercel\.app$",
+]
+
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly",
