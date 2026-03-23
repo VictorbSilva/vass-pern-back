@@ -71,7 +71,7 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "https://vass-pern-front-h9thdgoin-victorbsilvas-projects.vercel.app/produtos",
+    "https://vass-pern-front-h9thdgoin-victorbsilvas-projects.vercel.app",
 ]
 
 REST_FRAMEWORK = {
