@@ -22,6 +22,6 @@ class ProdutoViewSet(viewsets.ReadOnlyModelViewSet):
         busca = self.request.query_params.get('search', None)
 
         if busca is not None:
-            queryset = queryset.filter(nome__icontains=busca)
+            queryset = queryset.filter(nome__unaccent__icontains=busca)
 
         return queryset
