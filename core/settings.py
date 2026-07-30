@@ -15,25 +15,32 @@ from dotenv import load_dotenv
 import os
 import dj_database_url
 
-load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-0bv2&!e10g^)_alx3wn4+hx$1c=z2x42=3!_$b$%o!^jme%kzg'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = 'RENDER' not in os.environ
 
-ALLOWED_HOSTS = []
-RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-if RENDER_EXTERNAL_HOSTNAME:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError(
+        "SECRET_KEY não definida. Configure no .env (local) ou nas variáveis de produção."
+    )
+
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+
+
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv("ALLOWED_HOSTS", "").split(",")
+    if host.strip()
+]
+
+if DEBUG and not ALLOWED_HOSTS:
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
 
 # Application definition
@@ -72,14 +79,29 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "https://vass-pern-front-h9thdgoin-victorbsilvas-projects.vercel.app",
+    origin.strip()
+    for origin in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
+    if origin.strip()
 ]
+
+if DEBUG:
+    CORS_ALLOWED_ORIGINS += [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
+
 
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://vass-pern-front.*\.vercel\.app$",
+]
+
+
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")
+    if origin.strip()
 ]
 
 REST_FRAMEWORK = {
@@ -139,11 +161,20 @@ UNFOLD = {
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default='postgresql://postgres:Basilio1@localhost:5432/vassouras_db',
-        conn_max_age=600
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError(
+        "DATABASE_URL não definida. Configure no .env (local) ou adicione o Postgres no Railway (produção)."
     )
+
+DATABASES = {
+    "default": dj_database_url.parse(
+        DATABASE_URL,
+        conn_max_age=600,          # reaproveita conexões (bom para Railway)
+        conn_health_checks=True,   # descarta conexões mortas antes de usar
+    )
+
 }
 
 
@@ -177,11 +208,17 @@ USE_I18N = True
 
 USE_TZ = True
 
+
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.environ.get('CLOUD_NAME'),
     'API_KEY': os.environ.get('CLOUD_API_KEY'),
-    'API_SECRET': os.environ.get('CLOUD_API_SECRET')
+    'API_SECRET': os.environ.get('CLOUD_API_SECRET'),
 }
+
+if not DEBUG and not all(CLOUDINARY_STORAGE.values()):
+    raise RuntimeError(
+        "Credenciais do Cloudinary ausentes. Configure CLOUD_NAME, CLOUD_API_KEY e CLOUD_API_SECRET no Railway."
+    )
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
@@ -191,16 +228,28 @@ STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 
-STORAGES ={
+STORAGES = {
     'default': {
         'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage'
     },
-    'staticfiles':{
+    'staticfiles': {
         'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-    }
+    },
 }
 # Define the base URL for serving media files
 MEDIA_URL = '/media/'
 
 # Specify the directory where media files are stored
 MEDIA_ROOT = BASE_DIR / 'media'
+
+
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+X_FRAME_OPTIONS = "DENY"
+
