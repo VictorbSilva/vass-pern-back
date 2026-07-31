@@ -2,8 +2,11 @@ import io
 import shutil
 import tempfile
 
+from django.conf import settings
+from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase, override_settings
+from django.test import Client, TestCase, override_settings
+from django.urls import reverse
 from PIL import Image
 
 from .models import Produto, Categoria
@@ -104,3 +107,38 @@ class ConversaoImagemTest(TestCase):
         produto.save()
 
         self.assertFalse(Produto.objects.get(pk=produto.pk).imagem)
+
+
+SENHA_VALIDA = 'senha-de-teste-longa-123'
+
+
+@override_settings(
+    STORAGES={
+        'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+        'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+    },
+)
+class BloqueioLoginAdminTest(TestCase):
+    def setUp(self):
+        User.objects.create_superuser(
+            username='dono',
+            email='dono@exemplo.com',
+            password=SENHA_VALIDA,
+        )
+        self.url = reverse('admin:login')
+
+    def test_login_valido_continua_funcionando(self):
+        cliente = Client()
+
+        resposta = cliente.post(self.url, {'username': 'dono', 'password': SENHA_VALIDA})
+
+        self.assertEqual(resposta.status_code, 302)
+
+    def test_bloqueia_apos_limite_de_tentativas(self):
+        cliente = Client()
+        for _ in range(settings.AXES_FAILURE_LIMIT):
+            cliente.post(self.url, {'username': 'dono', 'password': 'errada'})
+
+        resposta = cliente.post(self.url, {'username': 'dono', 'password': SENHA_VALIDA})
+
+        self.assertEqual(resposta.status_code, 429)
