@@ -1,5 +1,7 @@
 from django.db import models
 
+from vitrine.imagens import converter_para_webp
+
 # Create your models here.
 
 class Categoria(models.Model):
@@ -17,6 +19,11 @@ class Produto(models.Model):
     ativo = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if self.imagem and not self.imagem._committed:
+            self.imagem = converter_para_webp(self.imagem)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.nome
