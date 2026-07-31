@@ -25,7 +25,7 @@ admin.site.site_title = "Painel Administrativo"
 admin.site.index_title = "Gestão do Site"
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path(f'{settings.ADMIN_URL}/', admin.site.urls),
     path("api-auth/", include("rest_framework.urls")),
     path("api/", include("vitrine.urls")),
 ]

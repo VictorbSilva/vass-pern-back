@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 import os
@@ -43,6 +44,18 @@ if DEBUG and not ALLOWED_HOSTS:
     ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
 
+ADMIN_URL = os.getenv("ADMIN_URL", "").strip().strip("/")
+
+if not ADMIN_URL:
+    if DEBUG:
+        ADMIN_URL = "admin"
+    else:
+        raise RuntimeError(
+            "ADMIN_URL não definida. Configure um caminho secreto para o admin "
+            "nas variáveis de produção antes do deploy."
+        )
+
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -63,6 +76,7 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'corsheaders',
+    'axes',
 
     'vitrine',
 ]
@@ -77,6 +91,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'axes.middleware.AxesMiddleware',
 ]
 
 
@@ -252,4 +267,22 @@ CSRF_COOKIE_SECURE = not DEBUG
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 X_FRAME_OPTIONS = "DENY"
+
+
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+AXES_ENABLED = os.getenv("AXES_ENABLED", "True").lower() == "true"
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = timedelta(minutes=30)
+AXES_RESET_ON_SUCCESS = True
+
+# Bloqueio por usuário, não por IP: atrás do proxy da Railway todos os visitantes
+# chegam com o mesmo REMOTE_ADDR, então bloquear por IP derrubaria o site inteiro.
+# O axes.W006 recomenda incluir 'ip_address', mas aqui isso seria o problema, não a solução.
+AXES_LOCKOUT_PARAMETERS = ["username"]
+
+SILENCED_SYSTEM_CHECKS = ["axes.W006"]
 
