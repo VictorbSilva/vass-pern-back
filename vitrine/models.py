@@ -8,6 +8,9 @@ class Categoria(models.Model):
     nome = models.CharField(max_length=200)
     descricao = models.TextField(blank=True, null=True)
 
+    class Meta:
+        ordering = ['nome']
+
     def __str__(self):
         return self.nome
 class Produto(models.Model):
@@ -19,6 +22,9 @@ class Produto(models.Model):
     ativo = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['nome']
 
     def save(self, *args, **kwargs):
         if self.imagem and not self.imagem._committed:
