@@ -109,6 +109,95 @@ class ConversaoImagemTest(TestCase):
         self.assertFalse(Produto.objects.get(pk=produto.pk).imagem)
 
 
+class ProdutoQueryParamsTest(TestCase):
+    def setUp(self):
+        self.vassouras = Categoria.objects.create(nome='vassouras')
+        self.cabos = Categoria.objects.create(nome='cabos')
+
+        Produto.objects.create(nome='vassoura piaçava', categoria=self.vassouras, preco=30)
+        Produto.objects.create(nome='vassoura de pelo', categoria=self.vassouras, preco=25)
+        Produto.objects.create(nome='cabo de madeira', categoria=self.cabos, preco=15)
+
+        self.url = reverse('produto-list')
+
+    def nomes(self, resposta):
+        return {item['nome'] for item in resposta.json()}
+
+    def test_ignora_categoria_nao_numerica(self):
+        resposta = self.client.get(self.url, {'categoria': 'abc'})
+
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(len(resposta.json()), 3)
+
+    def test_ignora_categoria_vazia(self):
+        resposta = self.client.get(self.url, {'categoria': ''})
+
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(len(resposta.json()), 3)
+
+    def test_filtra_por_categoria_valida(self):
+        resposta = self.client.get(self.url, {'categoria': self.cabos.id})
+
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(self.nomes(resposta), {'cabo de madeira'})
+
+    def test_categoria_inexistente_devolve_lista_vazia(self):
+        resposta = self.client.get(self.url, {'categoria': 9999})
+
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(resposta.json(), [])
+
+    def test_ignora_busca_vazia(self):
+        resposta = self.client.get(self.url, {'search': ''})
+
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(len(resposta.json()), 3)
+
+    def test_ignora_busca_so_com_espacos(self):
+        resposta = self.client.get(self.url, {'search': '   '})
+
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(len(resposta.json()), 3)
+
+    def test_busca_sem_acento_encontra_nome_com_acento(self):
+        resposta = self.client.get(self.url, {'search': 'piacava'})
+
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(self.nomes(resposta), {'vassoura piaçava'})
+
+    def test_nao_lista_produto_inativo(self):
+        Produto.objects.create(nome='rodo aposentado', categoria=self.cabos, preco=10, ativo=False)
+
+        resposta = self.client.get(self.url)
+
+        self.assertNotIn('rodo aposentado', self.nomes(resposta))
+
+
+class OrdenacaoTest(TestCase):
+    def test_produtos_vem_ordenados_por_nome(self):
+        categoria = Categoria.objects.create(nome='geral')
+        for nome in ['rodo', 'balde', 'vassoura']:
+            Produto.objects.create(nome=nome, categoria=categoria, preco=10)
+
+        resposta = self.client.get(reverse('produto-list'))
+
+        self.assertEqual(
+            [item['nome'] for item in resposta.json()],
+            ['balde', 'rodo', 'vassoura'],
+        )
+
+    def test_categorias_vem_ordenadas_por_nome(self):
+        for nome in ['vassouras', 'baldes', 'cabos']:
+            Categoria.objects.create(nome=nome)
+
+        resposta = self.client.get(reverse('categoria-list'))
+
+        self.assertEqual(
+            [item['nome'] for item in resposta.json()],
+            ['baldes', 'cabos', 'vassouras'],
+        )
+
+
 SENHA_VALIDA = 'senha-de-teste-longa-123'
 
 

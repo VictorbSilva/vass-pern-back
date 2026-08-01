@@ -14,14 +14,15 @@ class ProdutoViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         queryset = Produto.objects.select_related('categoria').filter(ativo=True)
 
-        categoria_id = self.request.query_params.get('categoria', None)
+        categoria_id = self.request.query_params.get('categoria', '').strip()
 
-        if categoria_id is not None:
-            queryset = queryset.filter(categoria_id=categoria_id)
+        # isdecimal, nao isdigit: "²".isdigit() e True, mas int("²") estoura.
+        if categoria_id.isdecimal():
+            queryset = queryset.filter(categoria_id=int(categoria_id))
 
-        busca = self.request.query_params.get('search', None)
+        busca = self.request.query_params.get('search', '').strip()
 
-        if busca is not None:
+        if busca:
             queryset = queryset.filter(nome__unaccent__icontains=busca)
 
         return queryset
